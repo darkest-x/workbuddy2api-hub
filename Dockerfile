@@ -16,7 +16,7 @@ COPY wb_*.py dashboard.html ./
 RUN mkdir -p /app/accounts /app/usage
 
 # Volume persistence for credentials and usage logs
-VOLUME ["/app/accounts", "/app/usage"]
+# Railway manages volumes via service config; VOLUME directive not supported
 
 EXPOSE 8788
 
