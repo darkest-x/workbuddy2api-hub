@@ -1,3 +1,18 @@
+## v1.7.16
+
+国内版上游可改址、面板稳定性与英文界面修复：新增 WB_CN_CHAT_UPSTREAM，海外出口可把国内版对话 / 刷新 / 任务一起切到 www.workbuddy.cn（#465）；修复空数据时 Token 时序悬停崩溃、英文界面词级拼接、区间切换串号与轮询 304 不命中（#470）。套件 172 个（127 Python + 45 JS）。
+
+- **国内版对话上游可通过 `WB_CN_CHAT_UPSTREAM` 改址**：`copilot.tencent.com` 从海外出口（代理软件全局模式等）连接时 TLS 握手被复位（`SSL: UNEXPECTED_EOF_WHILE_READING` / `WinError 10054`），国内版对话、刷新 token、模型目录、签到与成长任务全部失败，账号还会因此被熔断。设 `WB_CN_CHAT_UPSTREAM=https://www.workbuddy.cn` 后，桌面端 / CLI 身分的对话端点、`REALM_CONFIGS["cn"]["chat_upstream"]` 与成长任务的 `CHAT_BASE` 一起改走该地址；`X-Domain` 仍用账号自己的 domain。不设时行为与此前完全一致。
+  `WB_CN_CHAT_UPSTREAM` overrides the China-realm chat upstream. From an overseas exit (e.g. a proxy in global mode) the TLS handshake to `copilot.tencent.com` is reset, so China-realm chat, token refresh, the model catalogue, check-in and growth tasks all fail and accounts get tripped by the breaker. With `WB_CN_CHAT_UPSTREAM=https://www.workbuddy.cn` the desktop / CLI chat endpoints, `REALM_CONFIGS["cn"]["chat_upstream"]` and the growth-task `CHAT_BASE` all move to that host; `X-Domain` still comes from the account's own domain. Unset, nothing changes.
+- **面板三处缺陷与 README 结构修正**（#470）：空数据时 Token 时序图悬停不再抛 TypeError；补齐 12 条英文短语词条，消除「Taskand福利」「callsRequests」这类杂交串；区间切换加代次保护，迟到的旧响应会被丢弃，轮询窗口上界量化到 15 秒桶，连续轮询也能命中 304；README 的 §二 小节号与断开的端点表一并修正。
+
+## v1.7.15
+
+账号面板的模型冷却 / 达日限额提醒改为整行展示：长模型名与恢复时刻不再被 180px 账号列截断，悬停提示只保留原因与影响范围（#461）。套件 170 个（126 Python + 44 JS）。
+
+- **账号列的提醒胶囊改成整行完整显示**：账号列宽 180px，模型冷却胶囊（`模型 · 撞线 X · 恢复 Y`）与按模型达日限额胶囊（`模型 · 今日已用 N / 上限 M token 已达限额`）原本挤在这一列里，`white-space:nowrap` + 省略号让模型名一长（如 `deepseek-v4.1-flash`）就把时刻整段切掉。现在这两类胶囊从账号列拆出，紧跟账号行另起一整行（`colspan` 跨满表头列数，窄屏 grid 下跨满 6 栏），文本自己完整：模型名、撞线 / 恢复时刻、本地时间口径，达限那类还带已用 / 上限数值与 0 点恢复。**悬停提示只保留可见文本没说的部分**——上游判定额度用满（code 6004）/ 临时限流（429）等原因，以及「仅此模型受限，同账号其他模型照常接单」的影响范围；模型名与时刻已画在胶囊上，不再在悬停里重复一遍。这一行是账号行的**续行**，两行之间不画分割线（账号行交出 `td` 默认的 `border-bottom`，续行也不画 `border-top`，窄屏下负 margin 把两张卡片拼成一块），悬停账号行时续行一起高亮，避免「徽章和所属账号像两块」的割裂感。排序仍按账号整体走，账号行 ↔ tbody 行的对应关系不变。
+  Model cooldown and per-model daily-limit pills no longer live in the 180px account column, where `nowrap` + ellipsis cut the timestamps off; they now render as their own full-width row right below the account row (`colspan` spanning every header column, 6 grid columns on narrow screens), carrying the model name, cap and reset times, the "times are local" note, and used-vs-cap counts for daily limits. **The tooltip keeps only what the pill does not already say**: the reason (quota exhausted with code 6004 / temporary 429) and the scope ("only this model is restricted, the account's other models still take traffic"). The model name and timestamps are drawn on the pill, so they are no longer repeated on hover. That row is a **continuation** of the account row: no divider is drawn between them (the account row gives up the `td` default `border-bottom`, the continuation draws no `border-top`, and on narrow screens a negative margin joins the two cards into one), and hovering the account row highlights the continuation too, so the pill never looks detached from the account it belongs to. Sorting still reorders whole account rows, so the account↔row mapping is unchanged.
+
 ## v1.7.14
 
 渠道校验与账号治理、协议兼容与面板体验：传输层头名保真与按账号隔离连接、CLI / VSCode 身份对齐官方客户端、11140 默认停止换号并持久化（#429 / #431 / #448 / #450）；401 先刷新 token 再换号、自签证书代理支持 WB_CA_BUNDLE（#441 / #439 / #435）；补齐 Anthropic tool_result 图片结构化、工具结果插入顺序与函数 Schema 规整（#452 / #420 / #446 / #451）；新增按账号定址路由、排程时段配置、6004 标签修复、撞线样本区块（#455 / #456 / #454 / #253）。套件 169 个（126 Python + 43 JS）。

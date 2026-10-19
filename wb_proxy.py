@@ -10045,7 +10045,7 @@ def runtime_settings_view():
         "accounts_dir": ACCOUNTS_DIR,
         "usage_dir": USAGE_DIR,
         "settings_file": wb_settings.settings_path(ACCOUNTS_DIR),
-        "version": "1.7.14",
+        "version": "1.7.16",
     }
 def current_account():
     """Account used for display purposes (health / usage summaries)."""
@@ -16796,7 +16796,7 @@ class Handler(BaseHTTPRequestHandler):
             super().finish()
         except (ConnectionResetError, BrokenPipeError, ConnectionAbortedError):
             pass
-    server_version = "wb-proxy/1.7.14"
+    server_version = "wb-proxy/1.7.16"
     def log_message(self, fmt, *args):
         # 静默过滤前端看板高频定时心跳的正常 200 GET 请求（/logs、/usage、/accounts 轮询等）
         # 避免自增死循环刷屏与日志污染。遇 4xx/5xx 异常或所有非 GET 业务操作依然如实记录。
@@ -20872,7 +20872,13 @@ def _log_startup_summary(args, api_key_generated):
     log(f"issuer     : {wb_accounts.jwt_issuer(rep.access_token) if rep else chr(45)}")
     log("realm      : %s (%s)" % (
         CURRENT_REALM,
-        "www.workbuddy.ai" if CURRENT_REALM == "intl" else "copilot.tencent.com"))
+        "www.workbuddy.ai" if CURRENT_REALM == "intl"
+        else urllib.parse.urlsplit(wb_identity.CN_CHAT_BASE).netloc))
+    if wb_identity.CN_CHAT_BASE != wb_identity.CN_CHAT_BASE_DEFAULT:
+        log("cn upstream: %s (WB_CN_CHAT_UPSTREAM)" % wb_identity.CN_CHAT_BASE)
+    elif wb_identity.CN_CHAT_BASE_IGNORED:
+        log("cn upstream: ignored WB_CN_CHAT_UPSTREAM=%r (not an http(s) URL), using %s" % (
+            wb_identity.CN_CHAT_BASE_IGNORED, wb_identity.CN_CHAT_BASE_DEFAULT))
     log("user-agent : %s" % wb_accounts.USER_AGENT)
     if args.host == "0.0.0.0":
         ips = local_ip_addresses() or ["<this-pc-ip>"]
